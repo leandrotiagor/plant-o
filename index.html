@@ -168,7 +168,7 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
 
 function persist(fn){
   if(!col){alert("Não foi possível conectar para salvar. Entre na sua conta e tente de novo.");return}
-  fn().catch(()=>alert("Não consegui salvar agora. Tente de novo."));
+  fn().catch(e=>alert("Não consegui salvar agora: "+(e&&e.message||e)));
 }
 $("#add").onclick=()=>{
   const un=units.find(x=>uk(x)===$("#usel").value);
@@ -188,7 +188,7 @@ $("#uadd").onclick=()=>{
   if(!ucol){alert("Não foi possível conectar para salvar.");return}
   if(units.some(x=>uk(x)===c+"|"+u)){alert("Essa unidade já está cadastrada.");return}
   const id="u"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-  ucol.doc(id).set({cidade:c,unidade:u}).catch(()=>alert("Não consegui salvar agora."));
+  ucol.doc(id).set({cidade:c,unidade:u}).catch(e=>alert("Não consegui salvar agora: "+(e&&e.message||e)));
   units.push({id,cidade:c,unidade:u});$("#uuni").value="";fillUnits();
 };
 $("#ulist").onclick=e=>{const b=e.target.closest("[data-ux]");if(!b)return;const id=b.dataset.ux;if(!confirm("Remover esta unidade? Os plantões já lançados continuam salvos."))return;ucol.doc(id).delete();units=units.filter(x=>x.id!==id);fillUnits()};
@@ -229,7 +229,7 @@ const tbl=t=>({doc:id=>({
   delete:async()=>{const{error}=await sb.from(t).delete().eq("id",id);if(error)throw error}})});
 async function load(){
   const [a,b]=await Promise.all([sb.from("plantoes").select("id,date,cidade,unidade,turno").limit(5000),sb.from("unidades").select("id,cidade,unidade")]);
-  if(a.error||b.error){$("#st").textContent="Erro ao carregar os dados.";return}
+  if(a.error||b.error){const m=(a.error||b.error);$("#st").textContent="Erro ao carregar os dados: "+(m.message||m.code||"desconhecido");console.error(a.error,b.error);return}
   shifts=a.data;units=b.data;col=tbl("plantoes");ucol=tbl("unidades");
   $("#st").innerHTML='Salvo e sincronizado ✿ · <a href="#" id="out" style="color:var(--rose)">Sair</a>';render();
 }
