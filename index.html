@@ -108,7 +108,7 @@ td b{color:var(--rose);font-size:1.05rem}
 <button class="btn" id="add">Adicionar plantão ♡</button><button class="btn ghost" id="cl">Fechar</button>
 </div></div>
 
-<div class="modal" id="lg"><div class="sheet"><h3>Entrar ✿</h3><label>E-mail</label><input id="em" type="email" autocomplete="email"><label>Senha</label><input id="pw" type="password" autocomplete="current-password"><div id="lgm" class="sub" style="margin-top:8px;color:var(--rose)"></div><button class="btn" id="lgin">Entrar</button><button class="btn ghost" id="lup">Criar conta</button></div></div>
+<div class="modal" id="lg"><div class="sheet"><h3>Entrar ✿</h3><label>Nome de usuário</label><input id="em" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"><label>Senha</label><input id="pw" type="password" autocomplete="current-password"><div id="lgm" class="sub" style="margin-top:8px;color:var(--rose)"></div><button class="btn" id="lgin">Entrar</button><button class="btn ghost" id="lup">Criar conta</button></div></div>
 <script>
 const T={D:{n:"Diurno",h:12},N:{n:"Noturno",h:12},F:{n:"24h Diurno",h:24},G:{n:"24h Noturno",h:24}};
 const $=s=>document.querySelector(s);
@@ -221,8 +221,9 @@ function report(){
 render();
 
 // Supabase
-const SB_URL="COLE_AQUI_A_URL_DO_PROJETO",SB_KEY="COLE_AQUI_A_CHAVE_ANON_PUBLIC";
+const SB_URL="https://jljxpfipqtmqmvbqtwcb.supabase.co",SB_KEY="sb_publishable_7OhQ2D-fVv0niMXrUNDOxw_KQJafbDu";
 const sb=supabase.createClient(SB_URL,SB_KEY);
+const mail=()=>{const u=$("#em").value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,".").replace(/[^a-z0-9._-]/g,"");return u?u+"@demandas.leandrotiago.com.br":""};
 const tbl=t=>({doc:id=>({
   set:async o=>{const{error}=await sb.from(t).upsert({id,...o});if(error)throw error},
   delete:async()=>{const{error}=await sb.from(t).delete().eq("id",id);if(error)throw error}})});
@@ -234,13 +235,15 @@ async function load(){
 }
 const logged=()=>{$("#lg").classList.remove("open");load()};
 $("#lgin").onclick=async()=>{
-  const{error}=await sb.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});
-  if(error){$("#lgm").textContent="E-mail ou senha incorretos.";return}logged();
+  if(!mail()){$("#lgm").textContent="Digite o nome de usuário.";return}
+  const{error}=await sb.auth.signInWithPassword({email:mail(),password:$("#pw").value});
+  if(error){$("#lgm").textContent="Usuário ou senha incorretos.";return}logged();
 };
 $("#lup").onclick=async()=>{
-  const{data,error}=await sb.auth.signUp({email:$("#em").value.trim(),password:$("#pw").value});
+  if(!mail()){$("#lgm").textContent="Digite o nome de usuário.";return}
+  const{data,error}=await sb.auth.signUp({email:mail(),password:$("#pw").value});
   if(error){$("#lgm").textContent=error.message;return}
-  if(data.session)logged();else $("#lgm").textContent="Conta criada! Confirme pelo e-mail e depois entre.";
+  if(data.session)logged();else $("#lgm").textContent="Conta criada! Peça a confirmação ao administrador e depois entre.";
 };
 $("#st").onclick=async e=>{if(e.target.id==="out"){e.preventDefault();await sb.auth.signOut();location.reload()}};
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&col)load()});
