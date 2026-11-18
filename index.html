@@ -30,7 +30,7 @@ h1 em{color:var(--lil)}
 .wd{text-align:center;font-size:.72rem;font-weight:700;color:var(--mute);padding:4px 0}
 .day{min-height:78px;border-radius:14px;border:1px solid var(--line);padding:4px;cursor:pointer;background:var(--card);transition:.25s;animation:in .5s both;overflow:hidden}
 .day:hover{transform:translateY(-3px);border-color:var(--rose);box-shadow:0 6px 16px rgba(224,112,154,.25)}
-.day.out{visibility:hidden}
+.day.pad{visibility:hidden}
 .day.today{border:2px solid var(--rose);background:linear-gradient(160deg,var(--rose2),transparent)}
 .day b{font-size:.8rem}
 .chip{display:block;font-size:.62rem;font-weight:700;color:#fff;border-radius:8px;padding:1px 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -38,6 +38,10 @@ h1 em{color:var(--lil)}
 .out{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;border:0;border-radius:99px;padding:7px 16px;background:#d64545;color:#fff;font:700 .82rem Nunito,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(214,69,69,.35)}.out:hover{background:#bf3535}
 .rep{margin-top:4px}.rep .sub{margin-top:6px;font-size:.78rem}
 .more{font-size:.6rem;color:var(--mute)}
+.tools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.tools button{border:1.5px solid var(--rose2);background:none;color:var(--rose);border-radius:99px;padding:8px 14px;font:700 .8rem Nunito,sans-serif;cursor:pointer;transition:.2s}
+.tools button:hover{background:var(--rose2)}.tools button.danger{color:#d64545;border-color:#f3b8b8}.tools button.danger:hover{background:#fde8e8}
+.tools button:disabled{opacity:.5;cursor:default}
 .legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px;font-size:.78rem;color:var(--mute)}
 .legend span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;background:var(--c)}
 .modal{position:fixed;inset:0;background:rgba(74,44,59,.45);display:none;align-items:center;justify-content:center;z-index:5;padding:14px;backdrop-filter:blur(3px)}
@@ -90,6 +94,7 @@ td b{color:var(--rose);font-size:1.05rem}
 <div class="mh"><button class="nav" id="prev">‹</button><h2 id="mt"></h2><button class="nav" id="next">›</button></div>
 <div class="grid" id="wd"></div><div class="grid" id="days"></div>
 <div class="legend"><span style="--c:var(--d)">Diurno 07–19h</span><span style="--c:var(--n)">Noturno 19–07h</span><span style="--c:var(--f)">24h Diurno 07–07h</span><span style="--c:var(--g)">24h Noturno 19–19h</span><span style="--c:var(--u)">UBS 5h 08–13h</span></div>
+<div class="tools"><button id="undo">↩ Desfazer último lançamento</button><button id="clrm" class="danger">Limpar o mês</button></div>
 </section>
 
 <section id="rel" class="card hide">
@@ -134,7 +139,7 @@ function render(){
   $("#mt").textContent=view.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
   const first=new Date(y,mo,1).getDay(),n=new Date(y,mo+1,0).getDate();
   let h="";
-  for(let i=0;i<first;i++)h+='<div class="day out"></div>';
+  for(let i=0;i<first;i++)h+='<div class="day pad"></div>';
   for(let d=1;d<=n;d++){
     const k=iso(new Date(y,mo,d)),l=m[k]||[];
     h+=`<div class="day${k===todayIso?" today":""}" data-d="${k}" style="animation-delay:${d*18}ms"><b>${d}</b>`+
@@ -145,6 +150,12 @@ function render(){
   fillUnits();report();
 }
 const uk=u=>u.cidade+"|"+u.unidade;
+// horários dos turnos: [início em minutos no dia, duração em minutos]
+const TM={D:[420,720],N:[1140,720],F:[420,1440],G:[1140,1440],U:[480,300]};
+function span(date,t){const[y,m,d]=date.split("-").map(Number),s=Date.UTC(y,m-1,d)/60000+TM[t][0];return[s,s+TM[t][1]]}
+function findClash(date,t,list,ignoreId){const a=span(date,t);return list.find(s=>{if(s.id===ignoreId)return false;const b=span(s.date,s.turno);return a[0]<b[1]&&b[0]<a[1]})}
+const brDate=d=>d.split("-").reverse().join("/");
+const desc=s=>T[s.turno].n+" em "+s.unidade+" ("+brDate(s.date)+")";
 function allUnits(){const m={};units.forEach(u=>m[uk(u)]=u);shifts.forEach(s=>{m[uk(s)]=m[uk(s)]||{cidade:s.cidade,unidade:s.unidade}});return Object.values(m).sort((a,b)=>(a.cidade+a.unidade).localeCompare(b.cidade+b.unidade))}
 function fillUnits(){
   const ps=$("#usel").value,pf=$("#rfu").value;
@@ -187,6 +198,7 @@ function repDates(k,mode){
     else if(mode==="even")ok=d%2===0;
     else if(mode==="all")ok=w>0&&w<6;
     else if(mode==="24x72")ok=d>=d0&&(d-d0)%4===0;
+    if(mode!=="1"&&iso(dt)<iso(new Date()))ok=false; // repetições só a partir de hoje
     if(ok)out.push(iso(dt));
   }
   return out;
@@ -195,6 +207,7 @@ function updPrev(){
   const o=$("#rprev");if(!sel||editId){o.textContent="";return}
   const mode=$("#rep").value,ds=repDates(sel,mode);
   if(mode==="1"){o.textContent="";return}
+  if(!ds.length){o.textContent="Nenhum dia a partir de hoje neste mês.";return}
   let t=ds.length+" plantões: dias "+ds.map(x=>+x.slice(8)).join(", ");
   if(mode==="24x72"&&ds.length){
     const[y,m,d]=ds[ds.length-1].split("-").map(Number),nx=new Date(y,m-1,d+4);
@@ -226,19 +239,66 @@ $("#add").onclick=async()=>{
   try{
     if(editId){
       const nd=$("#edate").value;if(!nd){alert("Escolha a data do plantão.");return}
+      const x=findClash(nd,turno,shifts,editId);
+      if(x){alert("O horário bate com outro plantão: "+desc(x)+".");return}
       const{error}=await sb.from("plantoes").update({date:nd,cidade:c,unidade:u,turno}).eq("id",editId);
       if(error){alert("Não consegui salvar agora: "+error.message);return}
       shifts=shifts.map(s=>s.id===editId?{...s,date:nd,cidade:c,unidade:u,turno}:s);
       sel=nd;render();openDay(sel);return;
     }
-    const ds=repDates(sel,$("#rep").value),have=new Set(shifts.map(s=>s.date+"|"+uk(s)+"|"+s.turno));
-    const stamp=Date.now().toString(36);
-    const rows=ds.filter(d=>!have.has(d+"|"+c+"|"+u+"|"+turno)).map((d,i)=>({id:"p"+stamp+i.toString(36)+Math.random().toString(36).slice(2,5),date:d,cidade:c,unidade:u,turno}));
-    if(!rows.length){alert("Esse plantão já está lançado nesses dias.");return}
+    const ds=repDates(sel,$("#rep").value),stamp=Date.now().toString(36);
+    const acc=shifts.slice(),rows=[],skipped=[];
+    ds.forEach(d=>{
+      if(findClash(d,turno,acc)){skipped.push(+d.slice(8));return}
+      const r={id:"p"+stamp+rows.length.toString(36)+Math.random().toString(36).slice(2,5),date:d,cidade:c,unidade:u,turno};
+      rows.push(r);acc.push(r);
+    });
+    if(!rows.length){
+      if(!ds.length){alert("Não há dias a partir de hoje nesse mês para lançar. Escolha o mês atual ou um futuro.");return}
+      const x=ds.length===1?findClash(ds[0],turno,shifts):null;
+      alert(x?"O horário bate com outro plantão: "+desc(x)+".":"Esse horário já está ocupado em todos os dias escolhidos.");return;
+    }
     const{error}=await sb.from("plantoes").upsert(rows);
     if(error){alert("Não consegui salvar agora: "+error.message);return}
     shifts=shifts.concat(rows);render();openDay(sel);
+    if(skipped.length)alert("Lancei "+rows.length+" plantão(ões). Pulei os dias "+skipped.join(", ")+" por conflito de horário.");
   }finally{btn.disabled=false}
+};
+// apagar vários plantões de uma vez
+async function delMany(ids){
+  for(let i=0;i<ids.length;i+=100){
+    const part=ids.slice(i,i+100);
+    const{data,error}=await sb.from("plantoes").delete().in("id",part).select("id");
+    if(error){alert("Não consegui apagar agora: "+error.message);render();return false}
+    const gone=new Set((data||[]).map(r=>r.id));
+    shifts=shifts.filter(s=>!gone.has(s.id));
+    if(gone.size<part.length){alert("Alguns plantões não puderam ser apagados.");render();return false}
+  }
+  render();return true;
+}
+// o id de cada lançamento começa com "p" + carimbo de hora: plantões lançados juntos compartilham o carimbo
+function lastBatch(){
+  const l=shifts.filter(s=>/^p[0-9a-z]{8}/.test(s.id)),st=s=>s.id.slice(1,9);
+  if(!l.length)return[];
+  const mx=l.reduce((a,s)=>st(s)>a?st(s):a,"");
+  return l.filter(s=>st(s)===mx).sort((a,b)=>a.date.localeCompare(b.date));
+}
+$("#undo").onclick=async()=>{
+  if(!col){alert("Não foi possível conectar. Entre na sua conta e tente de novo.");return}
+  const b=lastBatch();if(!b.length){alert("Não encontrei nenhum lançamento recente para desfazer.");return}
+  const msg=b.length===1?"Desfazer o último lançamento?\n\n"+desc(b[0]):
+    "Desfazer o último lançamento?\n\n"+b.length+" plantões, de "+brDate(b[0].date)+" a "+brDate(b[b.length-1].date)+"\n"+T[b[0].turno].n+" em "+b[0].unidade;
+  if(!confirm(msg))return;
+  const btn=$("#undo");btn.disabled=true;
+  try{await delMany(b.map(s=>s.id))}finally{btn.disabled=false}
+};
+$("#clrm").onclick=async()=>{
+  if(!col){alert("Não foi possível conectar. Entre na sua conta e tente de novo.");return}
+  const pre=iso(view).slice(0,7),l=shifts.filter(s=>s.date.startsWith(pre));
+  if(!l.length){alert("Não há plantões neste mês.");return}
+  if(!confirm("Apagar TODOS os "+l.length+" plantões de "+$("#mt").textContent+"?\n\nIsso não pode ser desfeito."))return;
+  const btn=$("#clrm");btn.disabled=true;
+  try{await delMany(l.map(s=>s.id))}finally{btn.disabled=false}
 };
 $("#list").onclick=e=>{
   const ed=e.target.closest("[data-e]");if(ed){startEdit(ed.dataset.e);return}
