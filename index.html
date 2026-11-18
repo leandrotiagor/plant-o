@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meus Plantões</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff5f8;--card:#fff;--ink:#4a2c3b;--mute:#9a7488;--rose:#e0709a;--rose2:#f7c6d8;--lil:#9b7fd1;--gold:#d9a441;--line:#f3d9e4;--d:#f4b860;--n:#8c7ae6;--f:#e0709a;--g:#2f9e8f;--shadow:0 8px 30px rgba(224,112,154,.15);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241520;--card:#33202d;--ink:#fbe9f1;--mute:#c49bb2;--line:#4d3243;--rose2:#5b2f45;--shadow:0 8px 30px rgba(0,0,0,.35)}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+.petals{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.petals i{position:absolute;top:-30px;width:14px;height:14px;background:var(--rose2);border-radius:70% 0 70% 0;opacity:.7;animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg) translateX(40px)}}
+main{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:18px 14px 60px}
+header{text-align:center;padding:10px 0 4px;animation:in .8s both}
+h1{font-family:'Playfair Display',Georgia,serif;font-size:2.1rem;margin:0;color:var(--rose)}
+h1 em{color:var(--lil)}
+.sub{color:var(--mute);font-size:.9rem;margin-top:2px}
+.orn{display:block;margin:6px auto 0;width:150px}
+.tabs{display:flex;gap:6px;background:var(--card);padding:5px;border-radius:99px;box-shadow:var(--shadow);margin:14px auto;max-width:440px}
+.tabs button{flex:1;border:0;background:none;padding:9px;border-radius:99px;font:700 .9rem Nunito,sans-serif;color:var(--mute);cursor:pointer;transition:.3s}
+.tabs button.on{background:linear-gradient(135deg,var(--rose),var(--lil));color:#fff;transform:scale(1.03)}
+.card{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:16px;border:1px solid var(--line);animation:in .6s both}
+@keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mh h2{font-family:'Playfair Display',Georgia,serif;margin:0;font-size:1.4rem;text-transform:capitalize}
+.nav{border:0;width:38px;height:38px;border-radius:50%;background:var(--rose2);color:var(--rose);font-size:1.2rem;cursor:pointer;transition:.25s}
+.nav:hover{transform:scale(1.12) rotate(8deg)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.wd{text-align:center;font-size:.72rem;font-weight:700;color:var(--mute);padding:4px 0}
+.day{min-height:78px;border-radius:14px;border:1px solid var(--line);padding:4px;cursor:pointer;background:var(--card);transition:.25s;animation:in .5s both;overflow:hidden}
+.day:hover{transform:translateY(-3px);border-color:var(--rose);box-shadow:0 6px 16px rgba(224,112,154,.25)}
+.day.out{visibility:hidden}
+.day.today{border:2px solid var(--rose);background:linear-gradient(160deg,var(--rose2),transparent)}
+.day b{font-size:.8rem}
+.chip{display:block;font-size:.62rem;font-weight:700;color:#fff;border-radius:8px;padding:1px 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.D{background:var(--d)}.chip.N{background:var(--n)}.chip.F{background:var(--f)}.chip.G{background:var(--g)}
+.more{font-size:.6rem;color:var(--mute)}
+.legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px;font-size:.78rem;color:var(--mute)}
+.legend span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;background:var(--c)}
+.modal{position:fixed;inset:0;background:rgba(74,44,59,.45);display:none;align-items:center;justify-content:center;z-index:5;padding:14px;backdrop-filter:blur(3px)}
+.modal.open{display:flex}
+.sheet{background:var(--card);border-radius:24px;padding:20px;width:100%;max-width:420px;max-height:90vh;overflow:auto;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.sheet h3{font-family:'Playfair Display',Georgia,serif;margin:0 0 10px;color:var(--rose);text-transform:capitalize}
+label{display:block;font-size:.78rem;font-weight:700;color:var(--mute);margin:10px 0 4px}
+input,select{width:100%;padding:11px 12px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:600 .95rem Nunito,sans-serif}
+input:focus,select:focus{outline:none;border-color:var(--rose)}
+.turnos{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.turnos button{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:8px 2px;font:700 .8rem Nunito,sans-serif;color:var(--ink);cursor:pointer;transition:.2s}
+.turnos button small{display:block;font-weight:600;color:var(--mute);font-size:.68rem}
+.turnos button.on{border-color:var(--rose);background:var(--rose2);transform:scale(1.05)}
+.btn{width:100%;margin-top:14px;border:0;border-radius:99px;padding:12px;font:700 1rem Nunito,sans-serif;color:#fff;background:linear-gradient(135deg,var(--rose),var(--lil));cursor:pointer;transition:.25s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(224,112,154,.4)}
+.btn.ghost{background:none;color:var(--mute);margin-top:4px}
+.item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:14px;background:var(--bg);margin-bottom:6px;animation:in .3s both}
+.item i{width:10px;height:10px;border-radius:50%;flex:none}
+.item div{flex:1;font-size:.85rem}.item small{color:var(--mute)}
+.item button{border:0;background:none;font-size:1.1rem;cursor:pointer;color:var(--mute)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.chips button{border:1.5px solid var(--rose2);background:none;color:var(--rose);border-radius:99px;padding:6px 12px;font:700 .78rem Nunito,sans-serif;cursor:pointer}
+.chips button:hover{background:var(--rose2)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:8px}
+th{font-size:.7rem;text-transform:uppercase;color:var(--mute);text-align:center;padding:6px 4px}
+td{padding:9px 4px;text-align:center;border-top:1px solid var(--line)}
+td:first-child,th:first-child{text-align:left}
+td b{color:var(--rose);font-size:1.05rem}
+.tot td{font-weight:700;background:var(--rose2)}
+.empty{text-align:center;color:var(--mute);padding:20px;font-size:.9rem}
+.status{text-align:center;font-size:.75rem;color:var(--mute);margin-top:14px}
+.hide{display:none}footer{text-align:center;margin-top:26px;font-size:.78rem;color:var(--mute);letter-spacing:.04em}footer b{color:var(--rose);font-family:'Playfair Display',Georgia,serif;font-size:.9rem}
+@media (max-width:520px){.day{min-height:64px}.chip{font-size:.55rem}h1{font-size:1.7rem}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<div class="petals" id="petals"></div>
+<main>
+<header>
+<h1>Meus <em>Plantões</em></h1>
+<div class="sub">Sua agenda, sempre em dia ✿</div>
+<svg class="orn" viewBox="0 0 150 20"><path d="M5 10h55M90 10h55" stroke="#f3a9c4" stroke-width="1.5" stroke-linecap="round"/><g fill="#e0709a"><circle cx="75" cy="10" r="3"/><circle cx="75" cy="3.5" r="3" opacity=".7"/><circle cx="75" cy="16.5" r="3" opacity=".7"/><circle cx="68.5" cy="10" r="3" opacity=".7"/><circle cx="81.5" cy="10" r="3" opacity=".7"/></g><circle cx="75" cy="10" r="2" fill="#d9a441"/></svg>
+</header>
+<div class="tabs"><button class="on" data-t="cal">Agenda</button><button data-t="rel">Relatórios</button><button data-t="unid">Unidades</button></div>
+
+<section id="cal" class="card">
+<div class="mh"><button class="nav" id="prev">‹</button><h2 id="mt"></h2><button class="nav" id="next">›</button></div>
+<div class="grid" id="wd"></div><div class="grid" id="days"></div>
+<div class="legend"><span style="--c:var(--d)">Diurno 07–19h</span><span style="--c:var(--n)">Noturno 19–07h</span><span style="--c:var(--f)">24h Diurno 07–07h</span><span style="--c:var(--g)">24h Noturno 19–19h</span></div>
+</section>
+
+<section id="rel" class="card hide">
+<h2 style="font-family:'Playfair Display',Georgia,serif;margin:0 0 8px">Relatório por período</h2>
+<div class="row"><div><label>De</label><input type="date" id="rf"></div><div><label>Até</label><input type="date" id="rt"></div></div>
+<label>Unidade</label><select id="rfu"></select><div class="chips"><button data-q="m">Este mês</button><button data-q="p">Mês passado</button><button data-q="1">Dia 1 ao 10</button><button data-q="2">Dia 11 ao 20</button><button data-q="3">Dia 21 ao fim</button></div>
+<div class="scroll" id="rout"></div>
+</section>
+<section id="unid" class="card hide"><h2 style="font-family:'Playfair Display',Georgia,serif;margin:0 0 4px">Minhas unidades</h2><div class="sub">Cadastre uma vez e escolha na hora de lançar o plantão.</div><div class="row"><div><label>Cidade</label><input id="ucid" placeholder="Ex.: Perdigão" autocomplete="off"></div><div><label>Unidade</label><input id="uuni" placeholder="Ex.: Pronto Atendimento" autocomplete="off"></div></div><button class="btn" id="uadd">Cadastrar unidade ♡</button><div id="ulist" style="margin-top:14px"></div></section>
+<div class="status" id="st">Conectando…</div>
+<footer>Desenvolvido por <b>LT SISTEMAS</b></footer>
+</main>
+
+<div class="modal" id="md"><div class="sheet">
+<h3 id="mdt"></h3><div id="list"></div>
+<label>Unidade</label><select id="usel"></select>
+<label>Turno</label>
+<div class="turnos" id="tn"><button data-v="D" class="on">Diurno<small>07–19h</small></button><button data-v="N">Noturno<small>19–07h</small></button><button data-v="F">24h Diurno<small>07–07h</small></button><button data-v="G">24h Noturno<small>19–19h</small></button></div>
+<button class="btn" id="add">Adicionar plantão ♡</button><button class="btn ghost" id="cl">Fechar</button>
+</div></div>
+
+<div class="modal" id="lg"><div class="sheet"><h3>Entrar ✿</h3><label>E-mail</label><input id="em" type="email" autocomplete="email"><label>Senha</label><input id="pw" type="password" autocomplete="current-password"><div id="lgm" class="sub" style="margin-top:8px;color:var(--rose)"></div><button class="btn" id="lgin">Entrar</button><button class="btn ghost" id="lup">Criar conta</button></div></div>
+<script>
+const T={D:{n:"Diurno",h:12},N:{n:"Noturno",h:12},F:{n:"24h Diurno",h:24},G:{n:"24h Noturno",h:24}};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+let shifts=[],units=[],col=null,ucol=null,view=new Date(),sel=null,turno="D";
+view.setDate(1);
+const todayIso=iso(new Date());
+const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+
+// pétalas
+for(let i=0;i<12;i++){const p=document.createElement("i");p.style.left=Math.random()*100+"%";p.style.animationDuration=14+Math.random()*14+"s";p.style.animationDelay=-Math.random()*20+"s";p.style.transform="scale("+(.6+Math.random())+")";$("#petals").appendChild(p)}
+["D","S","T","Q","Q","S","S"].forEach(w=>{const d=document.createElement("div");d.className="wd";d.textContent=w;$("#wd").appendChild(d)});
+
+function byDate(){const m={};shifts.forEach(s=>(m[s.date]=m[s.date]||[]).push(s));return m}
+function render(){
+  const y=view.getFullYear(),mo=view.getMonth(),m=byDate();
+  $("#mt").textContent=view.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  const first=new Date(y,mo,1).getDay(),n=new Date(y,mo+1,0).getDate();
+  let h="";
+  for(let i=0;i<first;i++)h+='<div class="day out"></div>';
+  for(let d=1;d<=n;d++){
+    const k=iso(new Date(y,mo,d)),l=m[k]||[];
+    h+=`<div class="day${k===todayIso?" today":""}" data-d="${k}" style="animation-delay:${d*18}ms"><b>${d}</b>`+
+      l.slice(0,2).map(s=>`<span class="chip ${s.turno}">${esc(s.unidade)}</span>`).join("")+
+      (l.length>2?`<span class="more">+${l.length-2}</span>`:"")+`</div>`;
+  }
+  $("#days").innerHTML=h;
+  fillUnits();report();
+}
+const uk=u=>u.cidade+"|"+u.unidade;
+function allUnits(){const m={};units.forEach(u=>m[uk(u)]=u);shifts.forEach(s=>{m[uk(s)]=m[uk(s)]||{cidade:s.cidade,unidade:s.unidade}});return Object.values(m).sort((a,b)=>(a.cidade+a.unidade).localeCompare(b.cidade+b.unidade))}
+function fillUnits(){
+  const ps=$("#usel").value,pf=$("#rfu").value;
+  $("#usel").innerHTML=units.length?units.map(u=>`<option value="${esc(uk(u))}">${esc(u.cidade)} — ${esc(u.unidade)}</option>`).join(""):'<option value="">Cadastre unidades na aba Unidades</option>';
+  if(ps)$("#usel").value=ps;
+  $("#rfu").innerHTML='<option value="">Todas as unidades</option>'+allUnits().map(u=>`<option value="${esc(uk(u))}">${esc(u.cidade)} — ${esc(u.unidade)}</option>`).join("");
+  $("#rfu").value=pf;
+  $("#ulist").innerHTML=units.length?units.map(u=>`<div class="item"><div><b>${esc(u.unidade)}</b><br><small>${esc(u.cidade)}</small></div><button data-ux="${u.id}" title="Remover">✕</button></div>`).join(""):'<div class="empty">Nenhuma unidade cadastrada ainda.</div>';
+}
+function openDay(k){
+  sel=k;$("#mdt").textContent=fmt(k);
+  const l=(byDate()[k]||[]);
+  $("#list").innerHTML=l.map(s=>`<div class="item"><i style="background:var(--${s.turno.toLowerCase()})"></i><div><b>${esc(s.unidade)}</b> · ${esc(s.cidade)}<br><small>${T[s.turno].n}</small></div><button data-x="${s.id}" title="Remover">✕</button></div>`).join("");
+  $("#md").classList.add("open");
+}
+$("#days").onclick=e=>{const d=e.target.closest(".day");if(d&&d.dataset.d)openDay(d.dataset.d)};
+$("#cl").onclick=()=>$("#md").classList.remove("open");
+$("#md").onclick=e=>{if(e.target.id==="md")$("#md").classList.remove("open")};
+$("#tn").onclick=e=>{const b=e.target.closest("button");if(!b)return;turno=b.dataset.v;[...$("#tn").children].forEach(x=>x.classList.toggle("on",x===b))};
+$("#prev").onclick=()=>{view.setMonth(view.getMonth()-1);render()};
+$("#next").onclick=()=>{view.setMonth(view.getMonth()+1);render()};
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  ["cal","rel","unid"].forEach(i=>$("#"+i).classList.toggle("hide",b.dataset.t!==i));
+});
+
+function persist(fn){
+  if(!col){alert("Não foi possível conectar para salvar. Entre na sua conta e tente de novo.");return}
+  fn().catch(()=>alert("Não consegui salvar agora. Tente de novo."));
+}
+$("#add").onclick=()=>{
+  const un=units.find(x=>uk(x)===$("#usel").value);
+  if(!un){alert("Cadastre uma unidade na aba Unidades primeiro ♡");return}
+  const c=un.cidade,u=un.unidade;
+  const id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  persist(()=>col.doc(id).set({date:sel,cidade:c,unidade:u,turno}));
+  
+  if(!col){return}
+  shifts=shifts.filter(s=>s.id!==id).concat({id,date:sel,cidade:c,unidade:u,turno});render();openDay(sel);
+};
+$("#list").onclick=e=>{const b=e.target.closest("[data-x]");if(!b)return;const id=b.dataset.x;persist(()=>col.doc(id).delete());shifts=shifts.filter(s=>s.id!==id);render();openDay(sel)};
+
+$("#uadd").onclick=()=>{
+  const c=$("#ucid").value.trim(),u=$("#uuni").value.trim();
+  if(!c||!u){alert("Preencha a cidade e a unidade ♡");return}
+  if(!ucol){alert("Não foi possível conectar para salvar.");return}
+  if(units.some(x=>uk(x)===c+"|"+u)){alert("Essa unidade já está cadastrada.");return}
+  const id="u"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  ucol.doc(id).set({cidade:c,unidade:u}).catch(()=>alert("Não consegui salvar agora."));
+  units.push({id,cidade:c,unidade:u});$("#uuni").value="";fillUnits();
+};
+$("#ulist").onclick=e=>{const b=e.target.closest("[data-ux]");if(!b)return;const id=b.dataset.ux;if(!confirm("Remover esta unidade? Os plantões já lançados continuam salvos."))return;ucol.doc(id).delete();units=units.filter(x=>x.id!==id);fillUnits()};
+// relatórios
+function setRange(a,b){$("#rf").value=iso(a);$("#rt").value=iso(b)}
+document.querySelector(".chips").onclick=e=>{
+  const q=e.target.dataset.q;if(!q)return;const n=new Date(),y=n.getFullYear(),m=n.getMonth();
+  if(q==="m")setRange(new Date(y,m,1),new Date(y,m+1,0));
+  if(q==="p")setRange(new Date(y,m-1,1),new Date(y,m,0));
+  if(q==="1")setRange(new Date(y,m,1),new Date(y,m,10));
+  if(q==="2")setRange(new Date(y,m,11),new Date(y,m,20));
+  if(q==="3")setRange(new Date(y,m,21),new Date(y,m+1,0));
+  report();
+};
+$("#rf").onchange=$("#rt").onchange=$("#rfu").onchange=report;
+function report(){
+  const a=$("#rf").value,b=$("#rt").value,o=$("#rout"),f=$("#rfu").value;
+  if(!a||!b){o.innerHTML='<div class="empty">Escolha as datas ou um atalho acima ✿</div>';return}
+  const l=shifts.filter(s=>s.date>=a&&s.date<=b&&(!f||uk(s)===f));
+  if(!l.length){o.innerHTML='<div class="empty">Nenhum plantão neste período.</div>';return}
+  const g={};
+  l.forEach(s=>{const k=s.cidade+"|"+s.unidade;g[k]=g[k]||{c:s.cidade,u:s.unidade,D:0,N:0,F:0,G:0,t:0,h:0};g[k][s.turno]++;g[k].t++;g[k].h+=T[s.turno].h});
+  const rows=Object.values(g).sort((x,y)=>y.t-x.t);
+  const sum=k=>rows.reduce((s,r)=>s+r[k],0);
+  o.innerHTML="<table><tr><th>Unidade</th><th>Diurno</th><th>Noturno</th><th>24h Dia</th><th>24h Noite</th><th>Total</th><th>Horas</th></tr>"+
+   rows.map(r=>`<tr><td><b style="color:var(--ink);font-size:.9rem">${esc(r.u)}</b><br><small style="color:var(--mute)">${esc(r.c)}</small></td><td>${r.D}</td><td>${r.N}</td><td>${r.F}</td><td>${r.G}</td><td><b>${r.t}</b></td><td>${r.h}h</td></tr>`).join("")+
+   `<tr class="tot"><td>Total</td><td>${sum("D")}</td><td>${sum("N")}</td><td>${sum("F")}</td><td>${sum("G")}</td><td>${sum("t")}</td><td>${sum("h")}h</td></tr></table>`;
+}
+{const n=new Date();setRange(new Date(n.getFullYear(),n.getMonth(),1),new Date(n.getFullYear(),n.getMonth()+1,0))}
+render();
+
+// Supabase
+const SB_URL="COLE_AQUI_A_URL_DO_PROJETO",SB_KEY="COLE_AQUI_A_CHAVE_ANON_PUBLIC";
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const tbl=t=>({doc:id=>({
+  set:async o=>{const{error}=await sb.from(t).upsert({id,...o});if(error)throw error},
+  delete:async()=>{const{error}=await sb.from(t).delete().eq("id",id);if(error)throw error}})});
+async function load(){
+  const [a,b]=await Promise.all([sb.from("plantoes").select("id,date,cidade,unidade,turno").limit(5000),sb.from("unidades").select("id,cidade,unidade")]);
+  if(a.error||b.error){$("#st").textContent="Erro ao carregar os dados.";return}
+  shifts=a.data;units=b.data;col=tbl("plantoes");ucol=tbl("unidades");
+  $("#st").innerHTML='Salvo e sincronizado ✿ · <a href="#" id="out" style="color:var(--rose)">Sair</a>';render();
+}
+const logged=()=>{$("#lg").classList.remove("open");load()};
+$("#lgin").onclick=async()=>{
+  const{error}=await sb.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});
+  if(error){$("#lgm").textContent="E-mail ou senha incorretos.";return}logged();
+};
+$("#lup").onclick=async()=>{
+  const{data,error}=await sb.auth.signUp({email:$("#em").value.trim(),password:$("#pw").value});
+  if(error){$("#lgm").textContent=error.message;return}
+  if(data.session)logged();else $("#lgm").textContent="Conta criada! Confirme pelo e-mail e depois entre.";
+};
+$("#st").onclick=async e=>{if(e.target.id==="out"){e.preventDefault();await sb.auth.signOut();location.reload()}};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&col)load()});
+sb.auth.getSession().then(({data})=>{if(data.session)load();else{$("#st").textContent="Entre para ver seus plantões.";$("#lg").classList.add("open")}});
+</script></body></html>
