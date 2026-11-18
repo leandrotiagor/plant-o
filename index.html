@@ -4,7 +4,7 @@
 <title>Meus Plantões</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fff5f8;--card:#fff;--ink:#4a2c3b;--mute:#9a7488;--rose:#e0709a;--rose2:#f7c6d8;--lil:#9b7fd1;--gold:#d9a441;--line:#f3d9e4;--d:#f4b860;--n:#8c7ae6;--f:#e0709a;--g:#2f9e8f;--shadow:0 8px 30px rgba(224,112,154,.15);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#fff5f8;--card:#fff;--ink:#4a2c3b;--mute:#9a7488;--rose:#e0709a;--rose2:#f7c6d8;--lil:#9b7fd1;--gold:#d9a441;--line:#f3d9e4;--d:#f4b860;--n:#8c7ae6;--f:#e0709a;--g:#2f9e8f;--u:#4aa3df;--shadow:0 8px 30px rgba(224,112,154,.15);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241520;--card:#33202d;--ink:#fbe9f1;--mute:#c49bb2;--line:#4d3243;--rose2:#5b2f45;--shadow:0 8px 30px rgba(0,0,0,.35)}}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
@@ -34,7 +34,9 @@ h1 em{color:var(--lil)}
 .day.today{border:2px solid var(--rose);background:linear-gradient(160deg,var(--rose2),transparent)}
 .day b{font-size:.8rem}
 .chip{display:block;font-size:.62rem;font-weight:700;color:#fff;border-radius:8px;padding:1px 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chip.D{background:var(--d)}.chip.N{background:var(--n)}.chip.F{background:var(--f)}.chip.G{background:var(--g)}
+.chip.D{background:var(--d)}.chip.N{background:var(--n)}.chip.F{background:var(--f)}.chip.G{background:var(--g)}.chip.U{background:var(--u)}
+.out{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;border:0;border-radius:99px;padding:7px 16px;background:#d64545;color:#fff;font:700 .82rem Nunito,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(214,69,69,.35)}.out:hover{background:#bf3535}
+.rep{margin-top:4px}.rep .sub{margin-top:6px;font-size:.78rem}
 .more{font-size:.6rem;color:var(--mute)}
 .legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px;font-size:.78rem;color:var(--mute)}
 .legend span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;background:var(--c)}
@@ -75,6 +77,7 @@ td b{color:var(--rose);font-size:1.05rem}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
 <div class="petals" id="petals"></div>
+<button class="out hide" id="logout">Sair</button>
 <main>
 <header>
 <h1>Meus <em>Plantões</em></h1>
@@ -86,7 +89,7 @@ td b{color:var(--rose);font-size:1.05rem}
 <section id="cal" class="card">
 <div class="mh"><button class="nav" id="prev">‹</button><h2 id="mt"></h2><button class="nav" id="next">›</button></div>
 <div class="grid" id="wd"></div><div class="grid" id="days"></div>
-<div class="legend"><span style="--c:var(--d)">Diurno 07–19h</span><span style="--c:var(--n)">Noturno 19–07h</span><span style="--c:var(--f)">24h Diurno 07–07h</span><span style="--c:var(--g)">24h Noturno 19–19h</span></div>
+<div class="legend"><span style="--c:var(--d)">Diurno 07–19h</span><span style="--c:var(--n)">Noturno 19–07h</span><span style="--c:var(--f)">24h Diurno 07–07h</span><span style="--c:var(--g)">24h Noturno 19–19h</span><span style="--c:var(--u)">UBS 5h 08–13h</span></div>
 </section>
 
 <section id="rel" class="card hide">
@@ -104,13 +107,15 @@ td b{color:var(--rose);font-size:1.05rem}
 <h3 id="mdt"></h3><div id="list"></div>
 <label>Unidade</label><select id="usel"></select>
 <label>Turno</label>
-<div class="turnos" id="tn"><button data-v="D" class="on">Diurno<small>07–19h</small></button><button data-v="N">Noturno<small>19–07h</small></button><button data-v="F">24h Diurno<small>07–07h</small></button><button data-v="G">24h Noturno<small>19–19h</small></button></div>
-<button class="btn" id="add">Adicionar plantão ♡</button><button class="btn ghost" id="cl">Fechar</button>
+<div class="turnos" id="tn"><button data-v="D" class="on">Diurno<small>07–19h</small></button><button data-v="N">Noturno<small>19–07h</small></button><button data-v="F">24h Diurno<small>07–07h</small></button><button data-v="G">24h Noturno<small>19–19h</small></button><button data-v="U" style="grid-column:span 2">UBS 5 horas<small>08–13h</small></button></div>
+<div id="repbox" class="rep"><label>Repetir</label><select id="rep"><option value="1">Só neste dia</option><option value="odd">Dias ímpares do mês (inclui sáb, dom e feriados)</option><option value="even">Dias pares do mês (inclui sáb, dom e feriados)</option><option value="all">Todos os dias do mês (seg a sex, sem sáb e dom)</option><option value="24x72">24x72: 1 dia de plantão e 3 de folga (inclui sáb e dom)</option></select><div class="sub" id="rprev"></div></div>
+<div id="ebox" class="hide"><label>Data do plantão</label><input type="date" id="edate"></div>
+<button class="btn" id="add">Adicionar plantão ♡</button><button class="btn ghost hide" id="cedit">Cancelar edição</button><button class="btn ghost" id="cl">Fechar</button>
 </div></div>
 
 <div class="modal" id="lg"><div class="sheet"><h3>Entrar ✿</h3><label>Nome de usuário</label><input id="em" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"><label>Senha</label><input id="pw" type="password" autocomplete="current-password"><div id="lgm" class="sub" style="margin-top:8px;color:var(--rose)"></div><button class="btn" id="lgin">Entrar</button><button class="btn ghost" id="lup">Criar conta</button></div></div>
 <script>
-const T={D:{n:"Diurno",h:12},N:{n:"Noturno",h:12},F:{n:"24h Diurno",h:24},G:{n:"24h Noturno",h:24}};
+const T={D:{n:"Diurno",h:12},N:{n:"Noturno",h:12},F:{n:"24h Diurno",h:24},G:{n:"24h Noturno",h:24},U:{n:"UBS 5 horas (08–13h)",h:5}};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -152,13 +157,15 @@ function fillUnits(){
 function openDay(k){
   sel=k;$("#mdt").textContent=fmt(k);
   const l=(byDate()[k]||[]);
-  $("#list").innerHTML=l.map(s=>`<div class="item"><i style="background:var(--${s.turno.toLowerCase()})"></i><div><b>${esc(s.unidade)}</b> · ${esc(s.cidade)}<br><small>${T[s.turno].n}</small></div><button data-x="${s.id}" title="Remover">✕</button></div>`).join("");
+  $("#list").innerHTML=l.map(s=>`<div class="item"><i style="background:var(--${s.turno.toLowerCase()})"></i><div><b>${esc(s.unidade)}</b> · ${esc(s.cidade)}<br><small>${T[s.turno].n}</small></div><button data-e="${s.id}" title="Editar / trocar">✎</button><button data-x="${s.id}" title="Excluir">✕</button></div>`).join("");
+  resetEdit();updPrev();
   $("#md").classList.add("open");
 }
 $("#days").onclick=e=>{const d=e.target.closest(".day");if(d&&d.dataset.d)openDay(d.dataset.d)};
 $("#cl").onclick=()=>$("#md").classList.remove("open");
 $("#md").onclick=e=>{if(e.target.id==="md")$("#md").classList.remove("open")};
-$("#tn").onclick=e=>{const b=e.target.closest("button");if(!b)return;turno=b.dataset.v;[...$("#tn").children].forEach(x=>x.classList.toggle("on",x===b))};
+$("#tn").onclick=e=>{const b=e.target.closest("button");if(!b)return;turno=b.dataset.v;markTurno()};
+const markTurno=()=>[...$("#tn").children].forEach(x=>x.classList.toggle("on",x.dataset.v===turno));
 $("#prev").onclick=()=>{view.setMonth(view.getMonth()-1);render()};
 $("#next").onclick=()=>{view.setMonth(view.getMonth()+1);render()};
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
@@ -170,17 +177,75 @@ function persist(fn){
   if(!col){alert("Não foi possível conectar para salvar. Entre na sua conta e tente de novo.");return}
   fn().catch(e=>alert("Não consegui salvar agora: "+(e&&e.message||e)));
 }
-$("#add").onclick=()=>{
-  const un=units.find(x=>uk(x)===$("#usel").value);
+let editId=null;
+function repDates(k,mode){
+  const[y,m,d0]=k.split("-").map(Number),n=new Date(y,m,0).getDate(),out=[];
+  for(let d=1;d<=n;d++){
+    const dt=new Date(y,m-1,d),w=dt.getDay();let ok=false;
+    if(mode==="1")ok=d===d0;
+    else if(mode==="odd")ok=d%2===1;
+    else if(mode==="even")ok=d%2===0;
+    else if(mode==="all")ok=w>0&&w<6;
+    else if(mode==="24x72")ok=d>=d0&&(d-d0)%4===0;
+    if(ok)out.push(iso(dt));
+  }
+  return out;
+}
+function updPrev(){
+  const o=$("#rprev");if(!sel||editId){o.textContent="";return}
+  const mode=$("#rep").value,ds=repDates(sel,mode);
+  if(mode==="1"){o.textContent="";return}
+  let t=ds.length+" plantões: dias "+ds.map(x=>+x.slice(8)).join(", ");
+  if(mode==="24x72"&&ds.length){
+    const[y,m,d]=ds[ds.length-1].split("-").map(Number),nx=new Date(y,m-1,d+4);
+    if(nx.getMonth()!==m-1)t+=" · próximo plantão do ciclo: "+nx.toLocaleDateString("pt-BR");
+  }
+  o.textContent=t;
+}
+$("#rep").onchange=updPrev;
+function resetEdit(){
+  editId=null;$("#ebox").classList.add("hide");$("#cedit").classList.add("hide");$("#repbox").classList.remove("hide");
+  $("#add").textContent="Adicionar plantão ♡";
+}
+function startEdit(id){
+  const s=shifts.find(x=>x.id===id);if(!s)return;
+  editId=id;
+  if(![...$("#usel").options].some(o=>o.value===uk(s))){const op=document.createElement("option");op.value=uk(s);op.textContent=s.cidade+" — "+s.unidade;$("#usel").appendChild(op)}
+  $("#usel").value=uk(s);turno=s.turno;markTurno();
+  $("#edate").value=s.date;$("#ebox").classList.remove("hide");$("#cedit").classList.remove("hide");$("#repbox").classList.add("hide");
+  $("#rprev").textContent="";$("#add").textContent="Salvar alteração ♡";
+  $("#md .sheet").scrollTop=$("#md .sheet").scrollHeight;
+}
+$("#cedit").onclick=()=>openDay(sel);
+$("#add").onclick=async()=>{
+  const key=$("#usel").value;
+  const un=units.find(x=>uk(x)===key)||shifts.find(x=>uk(x)===key);
   if(!un){alert("Cadastre uma unidade na aba Unidades primeiro ♡");return}
-  const c=un.cidade,u=un.unidade;
-  const id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-  persist(()=>col.doc(id).set({date:sel,cidade:c,unidade:u,turno}));
-  
-  if(!col){return}
-  shifts=shifts.filter(s=>s.id!==id).concat({id,date:sel,cidade:c,unidade:u,turno});render();openDay(sel);
+  if(!col){alert("Não foi possível conectar para salvar. Entre na sua conta e tente de novo.");return}
+  const c=un.cidade,u=un.unidade,btn=$("#add");btn.disabled=true;
+  try{
+    if(editId){
+      const nd=$("#edate").value;if(!nd){alert("Escolha a data do plantão.");return}
+      const{error}=await sb.from("plantoes").update({date:nd,cidade:c,unidade:u,turno}).eq("id",editId);
+      if(error){alert("Não consegui salvar agora: "+error.message);return}
+      shifts=shifts.map(s=>s.id===editId?{...s,date:nd,cidade:c,unidade:u,turno}:s);
+      sel=nd;render();openDay(sel);return;
+    }
+    const ds=repDates(sel,$("#rep").value),have=new Set(shifts.map(s=>s.date+"|"+uk(s)+"|"+s.turno));
+    const stamp=Date.now().toString(36);
+    const rows=ds.filter(d=>!have.has(d+"|"+c+"|"+u+"|"+turno)).map((d,i)=>({id:"p"+stamp+i.toString(36)+Math.random().toString(36).slice(2,5),date:d,cidade:c,unidade:u,turno}));
+    if(!rows.length){alert("Esse plantão já está lançado nesses dias.");return}
+    const{error}=await sb.from("plantoes").upsert(rows);
+    if(error){alert("Não consegui salvar agora: "+error.message);return}
+    shifts=shifts.concat(rows);render();openDay(sel);
+  }finally{btn.disabled=false}
 };
-$("#list").onclick=e=>{const b=e.target.closest("[data-x]");if(!b)return;const id=b.dataset.x;persist(()=>col.doc(id).delete());shifts=shifts.filter(s=>s.id!==id);render();openDay(sel)};
+$("#list").onclick=e=>{
+  const ed=e.target.closest("[data-e]");if(ed){startEdit(ed.dataset.e);return}
+  const b=e.target.closest("[data-x]");if(!b)return;
+  if(!confirm("Excluir este plantão?"))return;
+  const id=b.dataset.x;persist(()=>col.doc(id).delete());shifts=shifts.filter(s=>s.id!==id);render();openDay(sel)
+};
 
 $("#uadd").onclick=()=>{
   const c=$("#ucid").value.trim(),u=$("#uuni").value.trim();
@@ -210,12 +275,12 @@ function report(){
   const l=shifts.filter(s=>s.date>=a&&s.date<=b&&(!f||uk(s)===f));
   if(!l.length){o.innerHTML='<div class="empty">Nenhum plantão neste período.</div>';return}
   const g={};
-  l.forEach(s=>{const k=s.cidade+"|"+s.unidade;g[k]=g[k]||{c:s.cidade,u:s.unidade,D:0,N:0,F:0,G:0,t:0,h:0};g[k][s.turno]++;g[k].t++;g[k].h+=T[s.turno].h});
+  l.forEach(s=>{const k=s.cidade+"|"+s.unidade;g[k]=g[k]||{c:s.cidade,u:s.unidade,D:0,N:0,F:0,G:0,U:0,t:0,h:0};g[k][s.turno]++;g[k].t++;g[k].h+=T[s.turno].h});
   const rows=Object.values(g).sort((x,y)=>y.t-x.t);
   const sum=k=>rows.reduce((s,r)=>s+r[k],0);
-  o.innerHTML="<table><tr><th>Unidade</th><th>Diurno</th><th>Noturno</th><th>24h Dia</th><th>24h Noite</th><th>Total</th><th>Horas</th></tr>"+
-   rows.map(r=>`<tr><td><b style="color:var(--ink);font-size:.9rem">${esc(r.u)}</b><br><small style="color:var(--mute)">${esc(r.c)}</small></td><td>${r.D}</td><td>${r.N}</td><td>${r.F}</td><td>${r.G}</td><td><b>${r.t}</b></td><td>${r.h}h</td></tr>`).join("")+
-   `<tr class="tot"><td>Total</td><td>${sum("D")}</td><td>${sum("N")}</td><td>${sum("F")}</td><td>${sum("G")}</td><td>${sum("t")}</td><td>${sum("h")}h</td></tr></table>`;
+  o.innerHTML="<table><tr><th>Unidade</th><th>Diurno</th><th>Noturno</th><th>24h Dia</th><th>24h Noite</th><th>UBS 5h</th><th>Total</th><th>Horas</th></tr>"+
+   rows.map(r=>`<tr><td><b style="color:var(--ink);font-size:.9rem">${esc(r.u)}</b><br><small style="color:var(--mute)">${esc(r.c)}</small></td><td>${r.D}</td><td>${r.N}</td><td>${r.F}</td><td>${r.G}</td><td>${r.U}</td><td><b>${r.t}</b></td><td>${r.h}h</td></tr>`).join("")+
+   `<tr class="tot"><td>Total</td><td>${sum("D")}</td><td>${sum("N")}</td><td>${sum("F")}</td><td>${sum("G")}</td><td>${sum("U")}</td><td>${sum("t")}</td><td>${sum("h")}h</td></tr></table>`;
 }
 {const n=new Date();setRange(new Date(n.getFullYear(),n.getMonth(),1),new Date(n.getFullYear(),n.getMonth()+1,0))}
 render();
@@ -231,7 +296,7 @@ async function load(){
   const [a,b]=await Promise.all([sb.from("plantoes").select("id,date,cidade,unidade,turno").limit(5000),sb.from("unidades").select("id,cidade,unidade")]);
   if(a.error||b.error){const m=(a.error||b.error);$("#st").textContent="Erro ao carregar os dados: "+(m.message||m.code||"desconhecido");console.error(a.error,b.error);return}
   shifts=a.data;units=b.data;col=tbl("plantoes");ucol=tbl("unidades");
-  $("#st").innerHTML='Salvo e sincronizado ✿ · <a href="#" id="out" style="color:var(--rose)">Sair</a>';render();
+  $("#st").textContent="Salvo e sincronizado ✿";$("#logout").classList.remove("hide");render();
 }
 const logged=()=>{$("#lg").classList.remove("open");load()};
 $("#lgin").onclick=async()=>{
@@ -245,7 +310,7 @@ $("#lup").onclick=async()=>{
   if(error){$("#lgm").textContent=error.message;return}
   if(data.session)logged();else $("#lgm").textContent="Conta criada! Peça a confirmação ao administrador e depois entre.";
 };
-$("#st").onclick=async e=>{if(e.target.id==="out"){e.preventDefault();await sb.auth.signOut();location.reload()}};
+$("#logout").onclick=async()=>{await sb.auth.signOut();location.reload()};
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&col)load()});
 sb.auth.getSession().then(({data})=>{if(data.session)load();else{$("#st").textContent="Entre para ver seus plantões.";$("#lg").classList.add("open")}});
 </script></body></html>
